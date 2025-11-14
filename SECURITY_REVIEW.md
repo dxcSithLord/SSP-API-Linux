@@ -104,7 +104,7 @@ Created comprehensive test suite: `test_secure_memory.c`
 **Running the Tests**:
 ```bash
 cd SSP-API-Source
-gcc -o test_secure_memory test_secure_memory.c utils.c -I. -lpthread
+make test_secure_memory
 ./test_secure_memory
 ```
 

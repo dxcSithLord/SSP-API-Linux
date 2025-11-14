@@ -25,7 +25,7 @@ EX3LIBS = -lsspapi
 GCC = gcc -g -D DEBUG_LOG
 
 # Not to be confused with filenames
-.PHONY: default all clean
+.PHONY: default all clean test_secure_memory
 
 # Not to be deleted
 .PRECIOUS:
@@ -72,3 +72,7 @@ sspfunc: $(EX2OBJS) $(LIBOBJS)
 	$(GCC) -Wall -Werror -o $(EX2TARG) $(EX2OBJS) $(EX2LIBS)
 ssptest: $(EX3OBJS) $(LIBOBJS)
 	$(GCC) -Wall -Werror -o $(EX3TARG) $(EX3OBJS) $(EX3LIBS)
+
+# Security test executable
+test_secure_memory: test_secure_memory.c utils.c $(HEADERS)
+	$(GCC) -o test_secure_memory test_secure_memory.c utils.c -I. -lpthread
