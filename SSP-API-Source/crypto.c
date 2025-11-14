@@ -1,4 +1,3 @@
-
 // crypto.c
 
 #include "global.h"
@@ -31,30 +30,15 @@ SQ_RCODE HMAC256(SQ_BYTE *pHashOut, SQ_BYTE *pSourceToHMAC, SQ_DWORD Len, const 
 	return (rc==0? SQ_PASS: SQ_FAIL);
 }
 
-/*
-============================================================================
-	SQRL VERIFY SIG				     
- -------------------------------------------------------------------------- 
-  What: Given a message that was previously signed, the signature that was  
-        previously obtained, and the public key matching the private key    
-        that was originally used, this returns 0 for successful signature   
-        verification or -1 in the event of anything amiss.		     
- 									     
-   How: The Sodium library wants to see a composite "sig | message" buffer, 
-        but SQRL uses separate signatures.  So we need to rebuild a hybrid  
-        buffer to pass to Sodium. Sodium also wants to return a result	     
-        msg buffer which we don't want. But it also uses it as a working    
-        scratch buffer. So we need to supply it a scratch buffer too.	     
- 									     
-  Args: (in) ptr to (unsigned) message to check			     
-        (in) len of message to check					     
-        (in) ptr to 64-byte signature					     
-        (in) ptr to 32-byte public key					     
- 									     
-  Retr: 0 == Success							     
-        0 != Failure / HeapAlloc or Signature Verify failure		     
-----------------------------------------------------------------------------
-*/
+/**
+ * Verify an Ed25519 signature for a message using the supplied public key.
+ *
+ * @param pMsg Pointer to the message to verify.
+ * @param uMsgLen Length in bytes of the message.
+ * @param pSig Pointer to the 64-byte signature for the message.
+ * @param pPubKey Pointer to the 32-byte public key corresponding to the signer.
+ * @return SQ_PASS if the signature is valid, SQ_FAIL otherwise.
+ */
 SQ_RCODE SqrlVerifySig(SQ_BYTE *pMsg, SQ_DWORD uMsgLen, SQ_BYTE *pSig, SQ_BYTE *pPubKey) {
 	BEG("SqrlVerifySig");
 	SQ_QWORD smlen;
