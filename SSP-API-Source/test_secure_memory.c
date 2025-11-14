@@ -29,8 +29,11 @@ static int tests_failed = 0;
 		} \
 	} while(0)
 
-/*
- * Test 1: Verify SecureMemoryClear zeros memory
+/**
+ * Execute a unit test that verifies SecureMemoryClear zeros a 256-byte buffer.
+ *
+ * The test initializes a buffer with 'A' characters, asserts the initialization,
+ * calls SecureMemoryClear on the buffer, and asserts that all bytes are zeroed.
  */
 void test_secure_memory_clear() {
 	printf("\n=== Test 1: SecureMemoryClear ===\n");
@@ -63,8 +66,11 @@ void test_secure_memory_clear() {
 	TEST_ASSERT(all_zero, "Buffer cleared to zeros");
 }
 
-/*
- * Test 2: Verify SecureGlobalFree clears before freeing
+/**
+ * Exercise SecureGlobalFree to verify it clears a 1024-byte allocation and sets the pointer to NULL.
+ *
+ * Allocates 1024 bytes, initializes the buffer with test data, invokes SecureGlobalFree(&ptr, size),
+ * and asserts that the pointer is set to NULL and the buffer was initialized prior to the free.
  */
 void test_secure_global_free() {
 	printf("\n=== Test 2: SecureGlobalFree ===\n");
@@ -88,8 +94,11 @@ void test_secure_global_free() {
 	TEST_ASSERT(ptr == NULL, "Pointer set to NULL after SecureGlobalFree");
 }
 
-/*
- * Test 3: Test SecureMemoryClear with NULL pointer
+/**
+ * Verifies that SecureMemoryClear safely handles NULL pointers and zero lengths.
+ *
+ * Calls SecureMemoryClear with a NULL pointer and a nonzero length, and with a valid buffer
+ * and a length of zero, asserting that neither invocation crashes and both are treated as safe.
  */
 void test_secure_memory_clear_null() {
 	printf("\n=== Test 3: SecureMemoryClear with NULL ===\n");
@@ -104,8 +113,11 @@ void test_secure_memory_clear_null() {
 	TEST_ASSERT(1, "SecureMemoryClear handles zero length");
 }
 
-/*
- * Test 4: Test sensitive data patterns
+/**
+ * Validate that SecureMemoryClear zeroes a 32-byte cryptographic key buffer.
+ *
+ * Initializes a 32-byte key with incremental byte values, invokes SecureMemoryClear on it,
+ * and asserts that all bytes are zero afterwards.
  */
 void test_sensitive_data_patterns() {
 	printf("\n=== Test 4: Sensitive Data Patterns ===\n");
@@ -133,8 +145,12 @@ void test_sensitive_data_patterns() {
 	TEST_ASSERT(all_clear, "Cryptographic key cleared");
 }
 
-/*
- * Test 5: Test clearing of authentication tokens
+/**
+ * Verify SecureMemoryClear zeroes authentication-related buffers.
+ *
+ * Initializes a simulated NUT token, CPS nonce, and HMAC buffer, invokes
+ * SecureMemoryClear on each, and asserts that every byte in each buffer is
+ * set to 0 after clearing.
  */
 void test_auth_token_clearing() {
 	printf("\n=== Test 5: Authentication Token Clearing ===\n");
@@ -172,8 +188,11 @@ void test_auth_token_clearing() {
 	TEST_ASSERT(hmac_clear, "HMAC cleared");
 }
 
-/*
- * Test 6: Stress test - multiple allocations and frees
+/**
+ * Perform a stress test of secure freeing by repeatedly allocating, filling, and securely freeing memory.
+ *
+ * Repeats 100 allocation/fill/secure-free cycles of 1024 bytes each. If any allocation fails or the pointer
+ * remains non-NULL after SecureGlobalFree, the test is marked as failed; otherwise the test is marked as passed.
  */
 void test_stress_secure_free() {
 	printf("\n=== Test 6: Stress Test Secure Free ===\n");
@@ -199,8 +218,13 @@ void test_stress_secure_free() {
 	TEST_ASSERT(success, "Stress test: 100 alloc/free cycles completed");
 }
 
-/*
- * Main test runner
+/**
+ * Execute the secure memory test suite and print a formatted summary.
+ *
+ * Runs each test case for secure memory handling, prints per-suite headers and
+ * a final summary showing total, passed, and failed counts.
+ *
+ * @returns 0 if all tests pass, 1 if any test fails.
  */
 int main(int argc, char *argv[]) {
 	printf("\n");
