@@ -2,13 +2,14 @@
 
 #Default third-party file versions for:
 #BerkeleyDB, Libsodium, MBedTLS, OpenSSL, QRencode, XAMPP
+#Updated to latest stable versions as of January 2025
 
-DBV='18.1.32'
-LSV='1.0.18'
-MBV='2.16.3'
-OSV='1.1.1d'
-QRV='4.0.2'
-XAV='7.3.11-0'
+DBV='18.1.40'
+LSV='1.0.20'
+MBV='3.6.5'
+OSV='3.5.4'
+QRV='4.1.1'
+XAV='8.2.12-0'
 
 DOWNLOADS=~/Downloads
 DESKTOP=~/Desktop
@@ -101,7 +102,7 @@ fi
 # Downloaded file names
 DBZ=db-$DBV.tar.gz
 LSZ=libsodium-$LSV-stable.tar.gz
-MBZ=mbedtls-$MBV-apache.tgz
+MBZ=mbedtls-$MBV.tar.gz
 OSZ=openssl-$OSV.tar.gz
 QRZ=qrencode-$QRV.tar.gz
 XAZ=xampp-linux-x64-$XAV-installer.run
@@ -123,10 +124,11 @@ echo  $QRZ
 echo  $XAZ
 echo 
 
-echo 'Installing gcc and make'
+echo 'Installing build dependencies: gcc, make, cmake, autoconf, net-tools'
 echo
 if [ ! -e /usr/bin/gcc ]; then sudo apt install gcc; fi
 if [ ! -e /usr/bin/make ]; then sudo apt install make; fi
+if [ ! -e /usr/bin/cmake ]; then sudo apt install cmake; fi
 if [ ! -e /bin/netstat ]; then sudo apt install net-tools; fi
 if [ ! -e /usr/share/autoconf ]; then sudo apt install autoconf; fi
 echo
@@ -142,7 +144,7 @@ if [ ! -e ${LSZ} ]; then wget ${OPT} https://download.libsodium.org/libsodium/re
 if [ ! -e ${LSZ} ]; then echo ${LSZ} has not been downloaded; exit; fi
 if [ -e ${LSZ} ] && [ ! -e ${LS} ]; then tar xvzf ${LSZ}; fi
 
-if [ ! -e ${MBZ} ]; then wget ${OPT} https://tls.mbed.org/download/${MBZ}; fi
+if [ ! -e ${MBZ} ]; then wget ${OPT} https://github.com/Mbed-TLS/mbedtls/releases/download/v${MBV}/${MBZ}; fi
 if [ ! -e ${MBZ} ]; then echo ${MBZ} has not been downloaded; exit; fi
 if [ -e ${MBZ} ] && [ ! -e ${MB} ]; then tar xvzf ${MBZ}; fi
 
@@ -184,7 +186,9 @@ echo ${MB}
 if [ ! -e /usr/local/lib/libmbed.so ]; then
 echo
 cd ${DOWNLOADS}/${MB}
-make no_test CFLAGS='-O2 -fPIC -DMBEDTLS_THREADING_PTHREAD -DMBEDTLS_THREADING_C'
+# For MBedTLS 3.6.5, use cmake for building
+cmake -DUSE_SHARED_MBEDTLS_LIBRARY=On -DENABLE_TESTING=Off -DMBEDTLS_THREADING_C=On -DMBEDTLS_THREADING_PTHREAD=On .
+make
 sudo make install
 cd /usr/local/lib
 sudo gcc -shared -o libmbed.so -Wl,-whole-archive -lmbedcrypto -lmbedtls -lmbedx509 -Wl,-no-whole-archive

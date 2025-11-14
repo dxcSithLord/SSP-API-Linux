@@ -554,9 +554,11 @@ SQ_RCODE InitSqrlSystem();
 SQ_RCODE ShutDownSqrlSystem();
 
 // utils.c
+void SecureMemoryClear(void *ptr, size_t len);
 void LogTheQueryAndReply(SQ_CHAR *pszMessage, SQRL_CONTROL_BLOCK *pSCB);
 void *GlobalAlloc(SQ_DWORD NumBytes);
 void GlobalFree(void **ppGlobalAllocation);
+void SecureGlobalFree(void **ppGlobalAllocation, SQ_DWORD NumBytes);
 SQ_RCODE CheckLocalhostCaller(SQRL_CONTROL_BLOCK *pSCB);
 void SQ_GetSystemTimeAsFileTime(SQ_QWORD *pFileTime);
 SQ_DWORD SQ_GetFileTimeAgeInMinutes(SQ_QWORD *pSqrlLastActivityDate, SQ_QWORD *pCurrentTime);

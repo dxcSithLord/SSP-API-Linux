@@ -14,9 +14,30 @@ QUEUE PendingAuthsQueue;
 void DeletePendingAuthAllocs(void *pObject) {
 	BEG("DeletePendingAuthAllocs)");
 	PENDING_AUTHS *pPendingAuth=(PENDING_AUTHS *)pObject;
-	
+
 	// Note: GlobalFree() tests for a null pointer
-	
+
+	// Securely clear sensitive authentication data before freeing
+	// Clear nuts (session identifiers)
+	SecureMemoryClear(pPendingAuth->aBrowserNut, sizeof(pPendingAuth->aBrowserNut));
+	SecureMemoryClear(pPendingAuth->aProtocolNut, sizeof(pPendingAuth->aProtocolNut));
+
+	// Clear public key
+	SecureMemoryClear(pPendingAuth->szSqrlPublicKey, sizeof(pPendingAuth->szSqrlPublicKey));
+
+	// Clear invitation token
+	SecureMemoryClear(pPendingAuth->szInvitation, sizeof(pPendingAuth->szInvitation));
+
+	// Clear IP address
+	SecureMemoryClear(pPendingAuth->aRequestIP, sizeof(pPendingAuth->aRequestIP));
+
+	// Clear CPS nonce
+	SecureMemoryClear(pPendingAuth->aCPSNonce, sizeof(pPendingAuth->aCPSNonce));
+
+	// Clear transaction MACs (HMAC256 hashes)
+	SecureMemoryClear(pPendingAuth->aTransactionMAC1, sizeof(pPendingAuth->aTransactionMAC1));
+	SecureMemoryClear(pPendingAuth->aTransactionMAC2, sizeof(pPendingAuth->aTransactionMAC2));
+
 	// if we have a next page URL, we release it
 	GlobalFree((void **)&pPendingAuth->pszNextPageURL);
 
@@ -37,16 +58,26 @@ void DeletePendingAuthObject(void *pObject) {
 	BEG("DeletePendingAuthOject()");
 	QUEUE_OBJECT *pQueueObject=(QUEUE_OBJECT *)pObject;
 	PENDING_AUTHS *pPendingAuth=(PENDING_AUTHS *)pObject;
-	
+
 	DequeueObject(&PendingAuthsQueue, pQueueObject);
+
+	// Securely clear sensitive authentication data before freeing
+	SecureMemoryClear(pPendingAuth->aBrowserNut, sizeof(pPendingAuth->aBrowserNut));
+	SecureMemoryClear(pPendingAuth->aProtocolNut, sizeof(pPendingAuth->aProtocolNut));
+	SecureMemoryClear(pPendingAuth->szSqrlPublicKey, sizeof(pPendingAuth->szSqrlPublicKey));
+	SecureMemoryClear(pPendingAuth->szInvitation, sizeof(pPendingAuth->szInvitation));
+	SecureMemoryClear(pPendingAuth->aRequestIP, sizeof(pPendingAuth->aRequestIP));
+	SecureMemoryClear(pPendingAuth->aCPSNonce, sizeof(pPendingAuth->aCPSNonce));
+	SecureMemoryClear(pPendingAuth->aTransactionMAC1, sizeof(pPendingAuth->aTransactionMAC1));
+	SecureMemoryClear(pPendingAuth->aTransactionMAC2, sizeof(pPendingAuth->aTransactionMAC2));
 
 	// if we have a next page URL
 	GlobalFree((void **)&pPendingAuth->pszNextPageURL);
-	
+
 	// if we have a login page URL
 	GlobalFree((void **)&pPendingAuth->pszLoginPageURL);
-	
-	// and release the object itself
+
+	// and release the object itself (already cleared above)
 	GlobalFree((void **)&pPendingAuth);
 	END();
 }

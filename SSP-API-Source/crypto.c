@@ -59,18 +59,18 @@ SQ_RCODE SqrlVerifySig(SQ_BYTE *pMsg, SQ_DWORD uMsgLen, SQ_BYTE *pSig, SQ_BYTE *
 	BEG("SqrlVerifySig");
 	SQ_QWORD smlen;
 	SQ_QWORD mlen;
-	
+
 	// the signed message length is 64 bytes longer than the caller's
 	// provided message length. So we adjust the length up by 64 bytes...
 
 	smlen=mlen=(SQ_QWORD)(uMsgLen+crypto_sign_BYTES);
-	
+
 	// create a temporary source buffer into which we will assemble
 	// a composite signed message of the sort Sodium wants to see
 
 	SQ_BYTE *pSrcBuf;
 	pSrcBuf=(SQ_BYTE *)GlobalAlloc(smlen);
-	
+
 	// annoyingly, Sodium uses the "return" buffer (which we neither
 	// need nor want) as scratch space while working. So we need to
 	// give it a same-size working buffer to mess around with
@@ -92,9 +92,10 @@ SQ_RCODE SqrlVerifySig(SQ_BYTE *pMsg, SQ_DWORD uMsgLen, SQ_BYTE *pSig, SQ_BYTE *
 	long long unsigned int *pmlen=(long long unsigned int *)&mlen;
 	int rc=crypto_sign_open(pRetBuf, pmlen, pSrcBuf, smlen, pPubKey);
 
-	// one way or another we're all done now, so we free up our allocs
-	GlobalFree((void **)&pSrcBuf);
-	GlobalFree((void **)&pRetBuf);
+	// one way or another we're all done now, so we securely clear and free our allocs
+	// These buffers contain signatures and message data that should be cleared
+	SecureGlobalFree((void **)&pSrcBuf, (SQ_DWORD)smlen);
+	SecureGlobalFree((void **)&pRetBuf, (SQ_DWORD)mlen);
 
 //[
 if(rc==SQ_PASS) LOG("Verification Passed"); else LOG("Verification Failed");
