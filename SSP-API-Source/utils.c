@@ -1,4 +1,3 @@
-
 // utils.c
 
 #include "global.h"
@@ -40,14 +39,50 @@ void LogTheQueryAndReply(SQ_CHAR *pszMessage, SQRL_CONTROL_BLOCK *pSCB) {
 	END();
 }
 	
+/**
+ * Securely zeros a memory region to remove sensitive data.
+ *
+ * Uses a platform-provided secure wipe when available; otherwise writes zeros
+ * through a volatile pointer to resist compiler optimizations. If `ptr` is
+ * NULL or `len` is zero no action is taken.
+ *
+ * @param ptr Pointer to the memory to clear.
+ * @param len Number of bytes to clear. 
+ */
+void SecureMemoryClear(void *ptr, size_t len) {
+	if(ptr == NULL || len == 0) {
+		return;
+	}
+#ifdef __GLIBC__
+	#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25)
+		// explicit_bzero available in glibc 2.25+
+		explicit_bzero(ptr, len);
+		return;
+	#endif
+#endif
+	// Fallback: use volatile pointer to prevent optimization
+	volatile unsigned char *volatile p = (volatile unsigned char *)ptr;
+	while(len--) {
+		*p++ = 0;
+	}
+}
+
 /*
 ===============================================================================
-	GLOBAL ALLOC / GLOBAL FREE / SAFE GLOBAL FREE				     
+	GLOBAL ALLOC / GLOBAL FREE / SAFE GLOBAL FREE
 -------------------------------------------------------------------------------
 */
 //[ For development to check for allocations not subsequently freed]
 static int AllocCount=0;
-//]
+/**
+ * Allocate a zero-initialized block of global memory and track the allocation.
+ *
+ * Allocates NumBytes bytes (initialized to zero). On success the global allocation
+ * counter is incremented and the allocated pointer is returned. If allocation
+ * fails the process is terminated with exit(1).
+ *
+ * @param NumBytes Number of bytes to allocate.
+ * @returns Pointer to the allocated, zero-initialized memory block. */
 void *GlobalAlloc(SQ_DWORD NumBytes) {
 	BEG("GlobalAlloc()");
 	void *ptr;
@@ -63,6 +98,17 @@ void *GlobalAlloc(SQ_DWORD NumBytes) {
 	END();
 	return ptr;
 }
+
+/**
+ * Free a tracked global allocation and update allocation tracking.
+ *
+ * If `ppGlobalAllocation` is NULL, points to `pszNull`, or the referenced pointer is NULL,
+ * the function does nothing. Otherwise it frees the referenced allocation, sets the
+ * caller's pointer to NULL, and decrements the internal allocation counter.
+ *
+ * @param ppGlobalAllocation Pointer to the pointer holding the allocated memory to free;
+ *                           the pointer is NULLed on success.
+ */
 void GlobalFree(void **ppGlobalAllocation) {
 	if(ppGlobalAllocation==NULL || *ppGlobalAllocation==pszNull) {
 		// The pointer is NULL or to "", not to allocated memory
@@ -73,6 +119,38 @@ void GlobalFree(void **ppGlobalAllocation) {
 	LOG("%p", *ppGlobalAllocation);
 //]
 	if(*ppGlobalAllocation!=NULL) {
+		free(*ppGlobalAllocation);
+		*ppGlobalAllocation=NULL;
+//[
+		AllocCount--;
+//]
+	}
+//[
+	LOG("[%d]", AllocCount);
+//]
+	END();
+}
+
+/**
+ * Securely clear and free a heap allocation that may contain sensitive data.
+ *
+ * If `ppGlobalAllocation` is NULL, points to `pszNull`, or `*ppGlobalAllocation` is NULL, the function returns without action.
+ *
+ * @param ppGlobalAllocation Pointer to the allocation pointer to clear and free; the pointed-to pointer is set to NULL on success.
+ * @param NumBytes Number of bytes to securely overwrite before freeing.
+ */
+void SecureGlobalFree(void **ppGlobalAllocation, SQ_DWORD NumBytes) {
+	if(ppGlobalAllocation==NULL || *ppGlobalAllocation==pszNull) {
+		// The pointer is NULL or to "", not to allocated memory
+		return;
+	}
+	BEG("SecureGlobalFree()");
+//[
+	LOG("%p", *ppGlobalAllocation);
+//]
+	if(*ppGlobalAllocation!=NULL) {
+		// Securely clear the memory before freeing
+		SecureMemoryClear(*ppGlobalAllocation, NumBytes);
 		free(*ppGlobalAllocation);
 		*ppGlobalAllocation=NULL;
 //[
@@ -190,11 +268,14 @@ LOG("[x]", aValue, BYTES_FOR_64_BITS);
 	return SQ_PASS;
 }
 
-/*
-===============================================================================
-	GET UNPREDICTABLE 64 BITS
-===============================================================================
-*/
+/**
+ * Produce an unpredictable 64-bit value and store it in the provided buffer.
+ *
+ * The buffer is filled with eight bytes (little-endian) containing an unpredictable
+ * value derived from a monotonic counter and transformed to reduce predictability.
+ *
+ * @param p64bitBuffer Pointer to a buffer at least 8 bytes long that will receive the value.
+ */
 void GetUnpredictable64bits(SQ_BYTE *p64bitBuffer) {
 	BEG("GetUnpredictable64bits()");
 
@@ -214,24 +295,29 @@ LOG("Error:%s %d", __FILE__, __LINE__);
 	blowfish_encryptblock(ctx, (BF_ULONG *)(&p64bitBuffer[4]), (BF_ULONG *)(&p64bitBuffer[0]));
 
 	blowfish_clean(ctx);
-	GlobalFree((void **)&ctx);
+	// Securely clear the blowfish context before freeing
+	SecureGlobalFree((void **)&ctx, sizeof(blowfish_context_t));
 
 	END();
 }
-/*
-===============================================================================
-	GET UNIQUE 12 CHAR NUT
- ------------------------------------------------------------------------------
-	Given a pointer to a 12 or 13-character buffer, this fills it with
-	a unique 72-bit pseudo-random value encoded into Base64url.
--------------------------------------------------------------------------------
-*/
+/**
+ * Produce a 12-character Base64url-encoded identifier derived from 72 bits of unique entropy.
+ *
+ * Encodes a freshly-generated 72-bit value (9 bytes) into 12 Base64url characters and writes
+ * them into pszBase64Buffer. If NullTerm is true, a trailing NUL byte is written at index 12;
+ * in that case pszBase64Buffer must have space for 13 bytes. Temporary sensitive data is
+ * cleared before returning.
+ *
+ * @param pszBase64Buffer Buffer to receive the 12-character Base64url-encoded NUT.
+ *                        Must be at least 12 bytes long; if NullTerm is true, must be at least 13 bytes.
+ * @param NullTerm If true, append a NUL terminator after the 12 characters.
+ */
 void GetUnique12charNut(SQ_CHAR *pszBase64Buffer, SQ_BOOL NullTerm) {
 	BEG("GetUnique12charNut()");
 
 	const int CtrLen=BYTES_FOR_64_BITS+1; // 9 bytes, 72 bits
 	const int BufLen=SQRL_NUT_LEN; // 12 encoded characters
-	
+
 	SQ_BYTE aEncryptedCounter[CtrLen];
 
 	// retrieve a 64-bit monotonic counter value which we then encrypt
@@ -241,7 +327,7 @@ void GetUnique12charNut(SQ_CHAR *pszBase64Buffer, SQ_BOOL NullTerm) {
 //[
 // If counter was reset for testing don't let this byte change
 if(bCounterReset==SQ_TRUE) aEncryptedCounter[CtrLen-1]=0x00;
-//]	
+//]
 
 //[
 LOG("aEncryptedCounter:");
@@ -249,7 +335,10 @@ LOG("[x]", aEncryptedCounter, CtrLen);
 //]
 	// encode our pseudo-random number
 	SqrlCvrtToBase64(pszBase64Buffer, BufLen, aEncryptedCounter, CtrLen);
-	
+
+	// Securely clear the encrypted counter buffer
+	SecureMemoryClear(aEncryptedCounter, CtrLen);
+
 	// null-terminate if requested (pszBase64Buffer size must be BufLen+1)
 	if(NullTerm) pszBase64Buffer[BufLen]='\0';
 //[
@@ -258,30 +347,32 @@ LOG("[c]", pszBase64Buffer, BufLen);
 //]
 	END();
 }
-/*
-===============================================================================
-	GET UNIQUE 20 DIGIT TOKEN
- ------------------------------------------------------------------------------
-	Given a pointer to a 20-character buffer, this fills the buffer with a 
-	unique 20-digit decimal number. It performs 20 rounds of long division of
-	a 128-bit guaranteed unique binary number
--------------------------------------------------------------------------------
-*/
+/**
+ * Produce a unique 20-digit decimal token into the supplied buffer.
+ *
+ * Uses 128 bits of unpredictable entropy and repeated long-division to
+ * convert that entropy into a 20-character decimal string. The token bytes
+ * are written directly into p20CharBuffer[0..19]; if NullTerm is true a NUL
+ * byte is written at p20CharBuffer[20].
+ *
+ * @param p20CharBuffer Buffer that will receive the 20-digit token; must be at least 20 bytes long (21 bytes if NullTerm is true).
+ * @param NullTerm If true, append a terminating NUL character at index 20.
+ */
 void GetUnique20digitToken(SQ_CHAR *p20CharBuffer, SQ_BOOL NullTerm) {
 	BEG("GetUnique20digitToken()");
-	
+
 	// retrieve a unique 64-bit pseudo-random value which we decimalize
 	SQ_BYTE Entropy[16]; // 128 bits (treated as little-endian)
 	GetUnpredictable64bits(&Entropy[0]);
 	GetUnpredictable64bits(&Entropy[8]);
-	
+
 	SQ_DWORD ByteNdx;
 	SQ_DWORD CharNdx=20;
 	SQ_QWORD Q[1]; // The 64-bit accumulator
 	SQ_QWORD *pQ=&Q[0];
 	SQ_DWORD *pLo=&((SQ_DWORD *)Q)[0];
 	SQ_DWORD *pHi=&((SQ_DWORD *)Q)[1];
-	
+
 	do {
 		CharNdx--;
 		*pHi=0;
@@ -297,7 +388,11 @@ void GetUnique20digitToken(SQ_CHAR *p20CharBuffer, SQ_BOOL NullTerm) {
 		} while(ByteNdx>0);
 		p20CharBuffer[CharNdx]=*pHi+'0';
 	} while(CharNdx>0);
-	
+
+	// Securely clear the entropy buffer
+	SecureMemoryClear(Entropy, sizeof(Entropy));
+	SecureMemoryClear(Q, sizeof(Q));
+
 	if(NullTerm==SQ_TRUE) {
 		p20CharBuffer[20]='\0';
 	}

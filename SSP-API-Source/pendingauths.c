@@ -1,22 +1,47 @@
-
 // pendingauths.c
 
 #include "global.h"
 
 QUEUE PendingAuthsQueue;
 
-/*
-===============================================================================
-	DELETE PENDING AUTH ALLOCS
-	This is called when we're shutting down as a callback of "DeleteQueue".
-===============================================================================
-*/
+/**
+ * Securely erase a pending authentication object's sensitive fields and free its per-object allocations.
+ *
+ * This function clears all sensitive data stored in the provided PENDING_AUTHS structure (session nuts,
+ * public key, invitation token, request IP, CPS nonce, and transaction MACs) and releases any allocated
+ * URL strings belonging to that object. Intended to be used as a destructor callback (for example when
+ * deleting the global PendingAuthsQueue during shutdown).
+ *
+ * @param pObject Pointer to a PENDING_AUTHS instance whose sensitive contents will be cleared and whose
+ *                per-object allocations will be freed. The pointer may be NULL (no action will be taken).
+ */
 void DeletePendingAuthAllocs(void *pObject) {
 	BEG("DeletePendingAuthAllocs)");
 	PENDING_AUTHS *pPendingAuth=(PENDING_AUTHS *)pObject;
-	
+
 	// Note: GlobalFree() tests for a null pointer
-	
+
+	// Securely clear sensitive authentication data before freeing
+	// Clear nuts (session identifiers)
+	SecureMemoryClear(pPendingAuth->aBrowserNut, sizeof(pPendingAuth->aBrowserNut));
+	SecureMemoryClear(pPendingAuth->aProtocolNut, sizeof(pPendingAuth->aProtocolNut));
+
+	// Clear public key
+	SecureMemoryClear(pPendingAuth->szSqrlPublicKey, sizeof(pPendingAuth->szSqrlPublicKey));
+
+	// Clear invitation token
+	SecureMemoryClear(pPendingAuth->szInvitation, sizeof(pPendingAuth->szInvitation));
+
+	// Clear IP address
+	SecureMemoryClear(pPendingAuth->aRequestIP, sizeof(pPendingAuth->aRequestIP));
+
+	// Clear CPS nonce
+	SecureMemoryClear(pPendingAuth->aCPSNonce, sizeof(pPendingAuth->aCPSNonce));
+
+	// Clear transaction MACs (HMAC256 hashes)
+	SecureMemoryClear(pPendingAuth->aTransactionMAC1, sizeof(pPendingAuth->aTransactionMAC1));
+	SecureMemoryClear(pPendingAuth->aTransactionMAC2, sizeof(pPendingAuth->aTransactionMAC2));
+
 	// if we have a next page URL, we release it
 	GlobalFree((void **)&pPendingAuth->pszNextPageURL);
 
@@ -26,27 +51,38 @@ void DeletePendingAuthAllocs(void *pObject) {
 	END();
 }
 
-/*
-===============================================================================
-	DELETE PENDING AUTH OBJECT
-	This removes a pending authentication object from the pending auths queue. It
-	optionally deletes any per-object allocations, then deletes the object itself.
-===============================================================================
-*/
+/**
+ * Remove a pending authentication entry from the global queue and free its resources.
+ *
+ * Securely erases sensitive fields within the pending auth, releases any per-object
+ * URL buffers, and frees the pending auth object itself.
+ *
+ * @param pObject Pointer to the QUEUE_OBJECT / PENDING_AUTHS to remove and destroy.
+ */
 void DeletePendingAuthObject(void *pObject) {
 	BEG("DeletePendingAuthOject()");
 	QUEUE_OBJECT *pQueueObject=(QUEUE_OBJECT *)pObject;
 	PENDING_AUTHS *pPendingAuth=(PENDING_AUTHS *)pObject;
-	
+
 	DequeueObject(&PendingAuthsQueue, pQueueObject);
+
+	// Securely clear sensitive authentication data before freeing
+	SecureMemoryClear(pPendingAuth->aBrowserNut, sizeof(pPendingAuth->aBrowserNut));
+	SecureMemoryClear(pPendingAuth->aProtocolNut, sizeof(pPendingAuth->aProtocolNut));
+	SecureMemoryClear(pPendingAuth->szSqrlPublicKey, sizeof(pPendingAuth->szSqrlPublicKey));
+	SecureMemoryClear(pPendingAuth->szInvitation, sizeof(pPendingAuth->szInvitation));
+	SecureMemoryClear(pPendingAuth->aRequestIP, sizeof(pPendingAuth->aRequestIP));
+	SecureMemoryClear(pPendingAuth->aCPSNonce, sizeof(pPendingAuth->aCPSNonce));
+	SecureMemoryClear(pPendingAuth->aTransactionMAC1, sizeof(pPendingAuth->aTransactionMAC1));
+	SecureMemoryClear(pPendingAuth->aTransactionMAC2, sizeof(pPendingAuth->aTransactionMAC2));
 
 	// if we have a next page URL
 	GlobalFree((void **)&pPendingAuth->pszNextPageURL);
-	
+
 	// if we have a login page URL
 	GlobalFree((void **)&pPendingAuth->pszLoginPageURL);
-	
-	// and release the object itself
+
+	// and release the object itself (already cleared above)
 	GlobalFree((void **)&pPendingAuth);
 	END();
 }
@@ -501,4 +537,3 @@ LOG(szCPSNonce);
 	return pszList;
 }
 //]
-
