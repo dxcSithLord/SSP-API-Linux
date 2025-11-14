@@ -9,7 +9,7 @@ LSV='1.0.20'
 MBV='3.6.5'
 OSV='3.5.4'
 QRV='4.1.1'
-XAV='8.2.12-0'
+XAV='8.3.12'
 
 DOWNLOADS=~/Downloads
 DESKTOP=~/Desktop

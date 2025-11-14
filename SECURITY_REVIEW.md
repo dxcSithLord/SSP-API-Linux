@@ -72,7 +72,7 @@ This document details the comprehensive security review and updates made to the 
 | **MBedTLS** | 2.16.3 (2019) | 3.6.5 (LTS) | 2025 | Long-term support release, maintained until 2027 |
 | **OpenSSL** | 1.1.1d (2019) | 3.5.4 (LTS) | 2025 | Long-term support release, maintained until April 2030 |
 | **QRencode** | 4.0.2 (2019) | 4.1.1 (Sept 2020) | Sept 2020 | Latest stable release |
-| **XAMPP** | 7.3.11-0 (PHP 7.3 EOL) | 8.2.12-0 (PHP 8.2) | 2025 | Updated to supported PHP version |
+| **XAMPP** | 7.3.11-0 (PHP 7.3 EOL) | 8.3.12 (PHP 8.3.12) | 2025 | Updated to latest stable PHP version |
 
 **Version Verification**: All dependency versions were verified as current as of November 14, 2025. These represent the latest stable or LTS releases available.
 

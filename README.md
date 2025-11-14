@@ -47,7 +47,7 @@ This project relies on the following dependencies, all updated to the latest sta
 | **QRencode** | 4.1.1 | Required | Latest stable release (Sept 2020) |
 | **LodePNG** | 20190210 | Bundled | PNG encoding for QR codes |
 | **Blowfish** | - | Bundled | By Andrew Carter |
-| **XAMPP** | 8.2.12-0 | Optional | PHP 8.2 environment |
+| **XAMPP** | 8.3.12 | Optional | PHP 8.3.12 environment |
 
 **Build Requirements**: gcc, make, **cmake** (new), autoconf, net-tools
 
@@ -66,6 +66,7 @@ Using XAMPP is required only if you haven't got an Apache/PHP environment set up
 - qrencode-4.0.2 (2019)
 - Berkeley DB 18.1.32 (2019)
 - xampp-linux-x64-7.3.11-0 (PHP 7.3, EOL)
+- xampp-linux-x64-8.2.12-0 (PHP 8.2)
 
 **Note**: These versions are outdated and should not be used for new installations.
 </details>
