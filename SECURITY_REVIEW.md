@@ -104,8 +104,13 @@ Created comprehensive test suite: `test_secure_memory.c`
 **Running the Tests**:
 ```bash
 cd SSP-API-Source
-make test_secure_memory
-./test_secure_memory
+make test  # Builds and runs tests automatically
+```
+
+Or build and run separately:
+```bash
+make test_secure_memory  # Builds using object files with standard flags
+./test_secure_memory     # Runs the tests
 ```
 
 ## Secure Coding Standards Compliance
@@ -199,8 +204,7 @@ sudo apt install cmake
 2. **Run Security Tests**:
    ```bash
    cd SSP-API-Source
-   make test_secure_memory
-   ./test_secure_memory
+   make test
    ```
 
 3. **Memory Leak Check**:
