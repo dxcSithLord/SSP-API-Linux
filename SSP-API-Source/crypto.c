@@ -31,6 +31,20 @@ SQ_RCODE HMAC256(SQ_BYTE *pHashOut, SQ_BYTE *pSourceToHMAC, SQ_DWORD Len, const 
 }
 
 /**
+ *============================================================================
+ *	SQRL VERIFY SIG				     
+ *-------------------------------------------------------------------------- 
+ * What: Given a message that was previously signed, the signature that was  
+ *       previously obtained, and the public key matching the private key    
+ *       that was originally used, this returns 0 for successful signature   
+ *       verification or -1 in the event of anything amiss.		     
+ *									     
+ *  How: The Sodium library wants to see a composite "sig | message" buffer, 
+ *       but SQRL uses separate signatures.  So we need to rebuild a hybrid  
+ *       buffer to pass to Sodium. Sodium also wants to return a result	     
+ *       msg buffer which we don't want. But it also uses it as a working    
+ *       scratch buffer. So we need to supply it a scratch buffer too.	     
+ *
  * Verify an Ed25519 signature for a message using the supplied public key.
  *
  * @param pMsg Pointer to the message to verify.
@@ -87,4 +101,5 @@ if(rc==SQ_PASS) LOG("Verification Passed"); else LOG("Verification Failed");
 
 	END();
 	return (rc==0? SQ_PASS: SQ_FAIL);
+
 }
