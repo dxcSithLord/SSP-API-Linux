@@ -85,7 +85,7 @@ This document details the comprehensive security review and updates made to the 
 2. Added **cmake** to build dependencies (required for MBedTLS 3.6.5)
 3. Updated MBedTLS download URL to GitHub releases
 4. Updated MBedTLS build commands to use cmake instead of make
-5. Updated PHP version to 8.2 (PHP 7.3 reached end-of-life)
+5. Updated PHP version to 8.3.12 via XAMPP 8.3.12 (PHP 7.3 reached end-of-life)
 
 ## Testing
 
@@ -241,11 +241,11 @@ sudo apt install cmake
 - CWE-200: Exposure of Sensitive Information to an Unauthorized Actor
 - OWASP Secure Coding Practices
 - CERT C Secure Coding Standard: MSC06-C, MEM03-C
-- SQRL Specification: https://www.grc.com/sqrl/sqrl.htm
-- Berkeley DB Documentation: https://docs.oracle.com/cd/E17076_01/html/
-- Libsodium Documentation: https://doc.libsodium.org/
-- MBedTLS Documentation: https://mbed-tls.readthedocs.io/
-- OpenSSL Documentation: https://www.openssl.org/docs/
+- [SQRL Specification](https://www.grc.com/sqrl/sqrl.htm)
+- [Berkeley DB Documentation](https://docs.oracle.com/cd/E17076_01/html/)
+- [Libsodium Documentation](https://doc.libsodium.org/)
+- [MBedTLS Documentation](https://mbed-tls.readthedocs.io/)
+- [OpenSSL Documentation](https://www.openssl.org/docs/)
 
 ## Conclusion
 
@@ -269,7 +269,7 @@ All changes have been implemented with backward compatibility in mind, ensuring 
 - MBedTLS: 2.16.3 → 3.6.5 (LTS)
 - OpenSSL: 1.1.1d → 3.5.4 (LTS)
 - QRencode: 4.0.2 → 4.1.1
-- XAMPP: 7.3.11-0 → 8.2.12-0
+- XAMPP: 7.3.11-0 → 8.3.12
 
 **Testing**:
 - Added comprehensive security test suite
