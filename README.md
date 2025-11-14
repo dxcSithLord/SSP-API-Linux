@@ -8,7 +8,7 @@ This is an implementation of the SSP API for Linux written in C.
 
 ## Security Notice ⚠️
 
-**Updated January 2025** - This codebase has been updated with comprehensive security improvements:
+**Updated November 2025** - This codebase has been updated with comprehensive security improvements:
 
 - ✅ **Secure Memory Handling**: All sensitive data (keys, tokens, authentication data) is now securely cleared from memory before being freed
 - ✅ **Updated Dependencies**: All dependencies updated to latest stable/LTS versions with security patches
@@ -34,7 +34,7 @@ SSP API Installation for 64-bit Linux (Ubuntu 18.04+ LTS):
 
 ## Dependencies
 
-### Updated Versions (January 2025)
+### Updated Versions (November 2025)
 
 This project relies on the following dependencies, all updated to the latest stable versions:
 
@@ -58,7 +58,7 @@ Using XAMPP is required only if you haven't got an Apache/PHP environment set up
 ### Previous Versions (Deprecated)
 
 <details>
-<summary>Click to see previous versions (pre-January 2025)</summary>
+<summary>Click to see previous versions (pre-November 2025)</summary>
 
 - libsodium-1.0.18-stable (2019)
 - mbedtls-2.16.3-apache (2019)
@@ -123,7 +123,7 @@ When contributing to this project, please ensure:
 
 ## Version History
 
-### January 2025 - Security & Dependency Update
+### November 2025 - Security & Dependency Update
 - Implemented secure memory clearing for all sensitive data
 - Updated all dependencies to latest stable/LTS versions
 - Added comprehensive security test suite

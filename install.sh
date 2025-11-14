@@ -2,7 +2,7 @@
 
 #Default third-party file versions for:
 #BerkeleyDB, Libsodium, MBedTLS, OpenSSL, QRencode, XAMPP
-#Updated to latest stable versions as of January 2025
+#Updated to latest stable versions as of November 2025
 
 DBV='18.1.40'
 LSV='1.0.20'
